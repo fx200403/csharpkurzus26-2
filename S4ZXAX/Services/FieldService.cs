@@ -20,4 +20,23 @@ public class FieldService
     {
         return new List<Field>(_fields);
     }
+
+    public int GetNextId()
+    {
+        if (_fields.Count == 0)
+        {
+            return 1;
+        }
+
+        int maxId = _fields[0].Id;
+        foreach (Field field in _fields)
+        {
+            if (field.Id > maxId)
+            {
+                maxId = field.Id;
+            }
+        }
+
+        return checked(maxId + 1);
+    }
 }

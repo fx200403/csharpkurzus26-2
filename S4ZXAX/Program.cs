@@ -1,4 +1,7 @@
+using System.Globalization;
 using System.Text;
+using FoldNyilvantarto.Models;
+using FoldNyilvantarto.Services;
 
 namespace FoldNyilvantarto;
 
@@ -8,6 +11,7 @@ internal class Program
     {
         Console.OutputEncoding = Encoding.UTF8;
         Console.InputEncoding = Encoding.UTF8;
+        FieldService fieldService = new FieldService();
 
         while (true)
         {
@@ -42,7 +46,10 @@ internal class Program
                     Console.WriteLine("Viszontlátásra!");
                     return;
                 case 1:
-                    ShowPlaceholder("Új földterület hozzáadása");
+                    if (!AddField(fieldService))
+                    {
+                        return;
+                    }
                     break;
                 case 2:
                     ShowPlaceholder("Földterületek listázása");
@@ -68,6 +75,91 @@ internal class Program
             }
 
             WaitForEnter();
+        }
+    }
+
+    private static bool AddField(FieldService fieldService)
+    {
+        Console.WriteLine();
+        Console.WriteLine("========================================");
+        Console.WriteLine("       ÚJ FÖLDTERÜLET HOZZÁADÁSA");
+        Console.WriteLine("========================================");
+        Console.WriteLine();
+
+        string? name = ReadRequiredText("Földterület neve: ");
+        if (name is null) return false;
+
+        double? area = ReadNumber("Terület mérete (hektár): ", false);
+        if (area is null) return false;
+
+        string? cropType = ReadRequiredText("Termesztett növény: ");
+        if (cropType is null) return false;
+
+        double? expectedYield = ReadNumber("Várható terméshozam (tonna/hektár): ", true);
+        if (expectedYield is null) return false;
+
+        string? status = ReadRequiredText("Művelési állapot: ");
+        if (status is null) return false;
+
+        Field field = new Field(fieldService.GetNextId(), name, area.Value, cropType, expectedYield.Value, status);
+        fieldService.AddField(field);
+
+        Console.WriteLine();
+        Console.WriteLine("A földterület sikeresen hozzáadva!");
+        Console.WriteLine();
+        Console.WriteLine($"Azonosító: {field.Id}");
+        Console.WriteLine($"Név: {field.Name}");
+        Console.WriteLine($"Terület: {field.AreaHectares} hektár");
+        Console.WriteLine($"Növény: {field.CropType}");
+        Console.WriteLine($"Várható hozam: {field.ExpectedYieldPerHectare} tonna/hektár");
+        Console.WriteLine($"Állapot: {field.Status}");
+        return true;
+    }
+
+    private static string? ReadRequiredText(string prompt)
+    {
+        while (true)
+        {
+            Console.Write(prompt);
+            string? input = Console.ReadLine();
+            if (input is null)
+            {
+                Console.WriteLine("\nA bevitel megszakadt; a földterület nem lett hozzáadva.");
+                return null;
+            }
+
+            if (!string.IsNullOrWhiteSpace(input))
+            {
+                return input.Trim();
+            }
+
+            Console.WriteLine("Az érték nem lehet üres. Kérlek, próbáld újra!");
+        }
+    }
+
+    private static double? ReadNumber(string prompt, bool allowZero)
+    {
+        while (true)
+        {
+            Console.Write(prompt);
+            string? input = Console.ReadLine();
+            if (input is null)
+            {
+                Console.WriteLine("\nA bevitel megszakadt; a földterület nem lett hozzáadva.");
+                return null;
+            }
+
+            bool parsed = double.TryParse(input, NumberStyles.Float, CultureInfo.GetCultureInfo("hu-HU"), out double value)
+                || double.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
+
+            if (parsed && double.IsFinite(value) && (allowZero ? value >= 0 : value > 0))
+            {
+                return value;
+            }
+
+            Console.WriteLine(allowZero
+                ? "Kérlek, adj meg egy nem negatív, véges számot!"
+                : "Kérlek, adj meg egy pozitív, véges számot!");
         }
     }
 
