@@ -52,7 +52,7 @@ internal class Program
                     }
                     break;
                 case 2:
-                    ShowPlaceholder("Földterületek listázása");
+                    ShowAllFields(fieldService);
                     break;
                 case 3:
                     ShowPlaceholder("Földterület módosítása");
@@ -76,6 +76,37 @@ internal class Program
 
             WaitForEnter();
         }
+    }
+
+    private static void ShowAllFields(FieldService fieldService)
+    {
+        Console.WriteLine();
+        Console.WriteLine("========================================");
+        Console.WriteLine("          FÖLDTERÜLETEK LISTÁJA");
+        Console.WriteLine("========================================");
+        Console.WriteLine();
+
+        IReadOnlyList<Field> fields = fieldService.GetAllFields();
+        if (fields.Count == 0)
+        {
+            Console.WriteLine("Jelenleg nincs nyilvántartott földterület.");
+            return;
+        }
+
+        Console.WriteLine($"Nyilvántartott földterületek száma: {fields.Count}");
+        Console.WriteLine();
+        CultureInfo hungarianCulture = CultureInfo.GetCultureInfo("hu-HU");
+        foreach (Field field in fields)
+        {
+            Console.WriteLine("----------------------------------------");
+            Console.WriteLine($"Azonosító: {field.Id}");
+            Console.WriteLine($"Név: {field.Name}");
+            Console.WriteLine($"Terület: {field.AreaHectares.ToString(hungarianCulture)} hektár");
+            Console.WriteLine($"Termesztett növény: {field.CropType}");
+            Console.WriteLine($"Várható hozam: {field.ExpectedYieldPerHectare.ToString(hungarianCulture)} tonna/hektár");
+            Console.WriteLine($"Művelési állapot: {field.Status}");
+        }
+        Console.WriteLine("----------------------------------------");
     }
 
     private static bool AddField(FieldService fieldService)
