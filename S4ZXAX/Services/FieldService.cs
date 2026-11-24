@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using FoldNyilvantarto.Models;
 
 namespace FoldNyilvantarto.Services;
@@ -38,5 +40,21 @@ public class FieldService
         }
 
         return checked(maxId + 1);
+    }
+
+    public List<Field> SearchFieldsByCrop(string cropType)
+    {
+        string normalizedCropType = cropType.Trim();
+
+        return _fields
+            .Where(field => string.Equals(field.CropType, normalizedCropType, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    public List<Field> GetFieldsOrderedByArea()
+    {
+        return _fields
+            .OrderByDescending(field => field.AreaHectares)
+            .ToList();
     }
 }

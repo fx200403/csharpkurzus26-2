@@ -58,7 +58,7 @@ internal class Program
                     ShowPlaceholder("Földterület módosítása");
                     break;
                 case 4:
-                    ShowPlaceholder("Keresés növény szerint");
+                    ShowSearchAndSortMenu(fieldService);
                     break;
                 case 5:
                     ShowPlaceholder("Várható termés kiszámítása");
@@ -95,18 +95,133 @@ internal class Program
 
         Console.WriteLine($"Nyilvántartott földterületek száma: {fields.Count}");
         Console.WriteLine();
+        foreach (Field field in fields)
+        {
+            ShowFieldDetails(field);
+        }
+        Console.WriteLine("----------------------------------------");
+    }
+
+    private static void ShowSearchAndSortMenu(FieldService fieldService)
+    {
+        while (true)
+        {
+            Console.WriteLine();
+            Console.WriteLine("========================================");
+            Console.WriteLine("        KERESÉS ÉS RENDEZÉS");
+            Console.WriteLine("========================================");
+            Console.WriteLine();
+            Console.WriteLine("1. Keresés növény szerint");
+            Console.WriteLine("2. Földterületek rendezése méret szerint");
+            Console.WriteLine("0. Vissza a főmenübe");
+            Console.WriteLine();
+            Console.Write("Válassz egy menüpontot: ");
+
+            string? input = Console.ReadLine();
+            if (input is null)
+            {
+                return;
+            }
+
+            if (!int.TryParse(input, out int choice) || choice < 0 || choice > 2)
+            {
+                Console.WriteLine("Érvénytelen menüpont! Kérlek, válassz 0, 1 vagy 2 közül.");
+                continue;
+            }
+
+            switch (choice)
+            {
+                case 0:
+                    return;
+                case 1:
+                    if (!SearchFieldsByCrop(fieldService))
+                    {
+                        return;
+                    }
+                    WaitForEnter("Nyomj Entert a keresés és rendezés menübe való visszatéréshez...");
+                    break;
+                case 2:
+                    ShowFieldsOrderedByArea(fieldService);
+                    WaitForEnter("Nyomj Entert a keresés és rendezés menübe való visszatéréshez...");
+                    break;
+            }
+        }
+    }
+
+    private static bool SearchFieldsByCrop(FieldService fieldService)
+    {
+        Console.WriteLine();
+        Console.WriteLine("========================================");
+        Console.WriteLine("           KERESÉS NÖVÉNY SZERINT");
+        Console.WriteLine("========================================");
+        Console.WriteLine();
+
+        string? cropType = ReadRequiredText("Add meg a keresett növényt: ");
+        if (cropType is null)
+        {
+            return false;
+        }
+
+        IReadOnlyList<Field> fields = fieldService.SearchFieldsByCrop(cropType);
+        Console.WriteLine();
+        Console.WriteLine("========================================");
+        Console.WriteLine("           KERESÉSI EREDMÉNYEK");
+        Console.WriteLine("========================================");
+        Console.WriteLine();
+        Console.WriteLine($"Keresett növény: {cropType}");
+
+        if (fields.Count == 0)
+        {
+            Console.WriteLine("Nem található földterület a megadott növénnyel.");
+            return true;
+        }
+
+        Console.WriteLine($"Találatok száma: {fields.Count}");
+        Console.WriteLine();
+        foreach (Field field in fields)
+        {
+            ShowFieldDetails(field);
+        }
+        Console.WriteLine("----------------------------------------");
+        return true;
+    }
+
+    private static void ShowFieldsOrderedByArea(FieldService fieldService)
+    {
+        Console.WriteLine();
+        Console.WriteLine("========================================");
+        Console.WriteLine("       FÖLDTERÜLETEK MÉRET SZERINT");
+        Console.WriteLine("========================================");
+        Console.WriteLine();
+
+        IReadOnlyList<Field> fields = fieldService.GetFieldsOrderedByArea();
+        if (fields.Count == 0)
+        {
+            Console.WriteLine("Jelenleg nincs nyilvántartott földterület.");
+            return;
+        }
+
         CultureInfo hungarianCulture = CultureInfo.GetCultureInfo("hu-HU");
         foreach (Field field in fields)
         {
             Console.WriteLine("----------------------------------------");
-            Console.WriteLine($"Azonosító: {field.Id}");
             Console.WriteLine($"Név: {field.Name}");
             Console.WriteLine($"Terület: {field.AreaHectares.ToString(hungarianCulture)} hektár");
-            Console.WriteLine($"Termesztett növény: {field.CropType}");
-            Console.WriteLine($"Várható hozam: {field.ExpectedYieldPerHectare.ToString(hungarianCulture)} tonna/hektár");
-            Console.WriteLine($"Művelési állapot: {field.Status}");
+            Console.WriteLine($"Növény: {field.CropType}");
         }
         Console.WriteLine("----------------------------------------");
+    }
+
+    private static void ShowFieldDetails(Field field)
+    {
+        CultureInfo hungarianCulture = CultureInfo.GetCultureInfo("hu-HU");
+        Console.WriteLine("----------------------------------------");
+        Console.WriteLine($"Azonosító: {field.Id}");
+        Console.WriteLine($"Név: {field.Name}");
+        Console.WriteLine($"Terület: {field.AreaHectares.ToString(hungarianCulture)} hektár");
+        Console.WriteLine($"Termesztett növény: {field.CropType}");
+        Console.WriteLine($"Várható hozam: {field.ExpectedYieldPerHectare.ToString(hungarianCulture)} tonna/hektár");
+        Console.WriteLine($"Művelési állapot: {field.Status}");
     }
 
     private static bool AddField(FieldService fieldService)
@@ -204,7 +319,7 @@ internal class Program
         Console.WriteLine("1. Új földterület hozzáadása");
         Console.WriteLine("2. Földterületek listázása");
         Console.WriteLine("3. Földterület módosítása");
-        Console.WriteLine("4. Keresés növény szerint");
+        Console.WriteLine("4. Keresés és rendezés");
         Console.WriteLine("5. Várható termés kiszámítása");
         Console.WriteLine("6. Gazdasági statisztikák");
         Console.WriteLine("7. Adatok mentése");
@@ -222,10 +337,10 @@ internal class Program
         Console.WriteLine("Ez a funkció még nincs megvalósítva.");
     }
 
-    private static void WaitForEnter()
+    private static void WaitForEnter(string prompt = "Nyomj Entert a főmenühöz való visszatéréshez...")
     {
         Console.WriteLine();
-        Console.WriteLine("Nyomj Entert a főmenühöz való visszatéréshez...");
+        Console.WriteLine(prompt);
         Console.ReadLine();
     }
 }
